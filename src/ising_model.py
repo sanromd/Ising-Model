@@ -7,16 +7,16 @@ from IO import write_data_energies, write_data_mgn
 from resampling import get_chi_error, get_heat_error
 
 class IsingModel:
-    def __init__(self, nstep=int(1e4), filename='spins_dat'):
-        self.j, self.k_B, self.t = 1.0, 1.0, 1.0
+    def __init__(self, nstep=int(1e4), shape = (10, 10), filename='spins.dat'):
+        self.j = self.k_B = 1.0
+        self.t = 1.0
         self.nstep = nstep
         self.filename = filename
-        self.lx = int(input("Length of the lattice's side: "))
-        self.ly = self.lx
-        self.N = self.lx * self.ly
+        self.shape = shape
+        self.ly, self.lx = shape
+        self.N = np.prod(shape)
         self.total_e = 0
-        self.spin_array = np.array([1 if random() < 0.5 else -1 \
-            for _ in range(self.N)]).reshape((self.lx, self.ly))
+        self.spin_array = np.random.choice([-1, 1], size=self.shape)
 
     def get_total_energy(self):
         nn = np.roll(self.spin_array, 1, axis=0) + np.roll(self.spin_array, 1, axis=1)
@@ -33,7 +33,7 @@ class IsingModel:
             raise ValueError('Invalid dynamics provided. Input ' + 
                 '\'g\' for Glauber or \'k\' for Kawasaki')
 
-        self.t = float(input("Temperature of the system: ")) 
+        
         plt.figure()
         plt.imshow(self.spin_array, animated=True)
 
@@ -145,8 +145,13 @@ class IsingModel:
             write_data_mgn(ts, mgns, chis, chis_errors, self.filename)
  
 def main():
-    isingModel = IsingModel(filename='example')
+    shape = input('The shape of the system (tuple): ')
+    shape = tuple(map(int, shape.split(',')))
+    nsteps = int(input('Number of steps: '))
+    isingModel = IsingModel(filename='example', nstep=nsteps, shape = shape)
+    isingModel.t = float(input("Temperature of the system: "))
     isingModel.plot_equilibrium_state()
+    isingModel.get_magnetisation_and_energy_data(ts=np.linspace(1.0, 3.0, 50))
 
 if __name__ == "__main__":
     main()
